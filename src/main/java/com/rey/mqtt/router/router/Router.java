@@ -1,4 +1,4 @@
-package com.rey.mqtt.router;
+package com.rey.mqtt.router.router;
 
 import com.rey.mqtt.router.config.RouterConfig;
 import com.rey.mqtt.router.config.TopicMapperProperties;

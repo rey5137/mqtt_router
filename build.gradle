@@ -1,9 +1,13 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.1'
+        classpath 'gradle.plugin.com.github.alexeylisyutenko:windows-service-plugin:1.1.0'
     }
 }
 
@@ -12,6 +16,7 @@ plugins {
 }
 
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.github.alexeylisyutenko.windows-service-plugin'
 
 group 'com.rey'
 version '1.0-SNAPSHOT'
@@ -34,4 +39,17 @@ jar {
                 'Main-Class': 'com.rey.mqtt.router.App'
         )
     }
+}
+
+windowsService {
+    architecture = 'amd64'
+    displayName = 'MQTT Router Service'
+    description = 'MQTT Router Service'
+    startClass = 'com.rey.mqtt.router.WindowService'
+    startMethod = 'main'
+    startParams = 'start -p %APP_HOME%lib\\router.properties'
+    stopClass = 'com.rey.mqtt.router.WindowService'
+    stopMethod = 'main'
+    stopParams = 'stop'
+    startup = 'auto'
 }
