@@ -47,7 +47,7 @@ windowsService {
     description = 'MQTT Router Service'
     startClass = 'com.rey.mqtt.router.WindowService'
     startMethod = 'main'
-    startParams = 'start -p %APP_HOME%lib\\router.properties'
+    startParams = 'start -p %APP_HOME%lib\\router.properties -l %APP_HOME%lib\\logback.xml'
     stopClass = 'com.rey.mqtt.router.WindowService'
     stopMethod = 'main'
     stopParams = 'stop'

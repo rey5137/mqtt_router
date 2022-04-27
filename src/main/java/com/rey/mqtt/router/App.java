@@ -1,5 +1,6 @@
 package com.rey.mqtt.router;
 
+import com.rey.mqtt.router.config.LogConfig;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -19,6 +20,13 @@ public class App {
                         .required(true)
                         .desc("Location of properties file").build()
         );
+        options.addOption(
+                Option.builder("l").longOpt("log")
+                        .argName("log")
+                        .hasArg()
+                        .required(false)
+                        .desc("Logback config file").build()
+        );
 
         CommandLine cmd;
         CommandLineParser parser = new DefaultParser();
@@ -26,6 +34,10 @@ public class App {
 
         try {
             cmd = parser.parse(options, args);
+            if(cmd.hasOption("l")) {
+                String logbackConfigFile = cmd.getOptionValue("l");
+                LogConfig.setupLog(logbackConfigFile);
+            }
             String propertyFile = cmd.getOptionValue("p");
             RouterService routerService = new RouterService();
             routerService.run(propertyFile);
