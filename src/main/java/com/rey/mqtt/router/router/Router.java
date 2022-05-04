@@ -1,9 +1,11 @@
 package com.rey.mqtt.router.router;
 
+import com.rey.mqtt.router.config.MqttConnectionProperties;
+import com.rey.mqtt.router.config.MqttInConnectionProperties;
+import com.rey.mqtt.router.config.MqttOutConnectionProperties;
 import com.rey.mqtt.router.config.RouterConfig;
 import com.rey.mqtt.router.config.TopicMapperProperties;
 import com.rey.mqtt.router.mapper.TopicMapper;
-import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,18 +29,30 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
         name = routerConfig.getRouterProperties().name();
         if (name == null)
             name = Integer.toHexString(hashCode());
-        inboundAdapter = new InboundAdapter(name, routerConfig.getInConnectionProperties(), this);
+        inboundAdapter = buildInboundAdapter(routerConfig.getInConnectionProperties());
         int num = routerConfig.getOutConnectionProperties().numberOfConnections();
         outboundAdapters = new OutboundAdapter[num];
         if (num > 1) {
             topicMap = new HashMap<>();
             for (int i = 0; i < num; i++) {
-                outboundAdapters[i] = new OutboundAdapter(String.format("%s#%s", name, i + 1), routerConfig.getOutConnectionProperties(), i + 1);
+                outboundAdapters[i] = buildOutboundAdapter(String.format("%s#%s", name, i + 1), routerConfig.getOutConnectionProperties(), i + 1);
             }
         } else {
-            outboundAdapters[0] = new OutboundAdapter(name, routerConfig.getOutConnectionProperties(), null);
+            outboundAdapters[0] = buildOutboundAdapter(name, routerConfig.getOutConnectionProperties(), null);
         }
         topicMapper = TopicMapperProperties.buildTopicMapper(routerConfig.getTopicMapperProperties());
+    }
+
+    private InboundAdapter buildInboundAdapter(MqttInConnectionProperties properties) {
+        if(MqttConnectionProperties.VERSION_3.equals(properties.version()))
+            return new InboundV3Adapter(name, properties, this);
+        return new InboundV5Adapter(name, properties, this);
+    }
+
+    private OutboundAdapter buildOutboundAdapter(String name, MqttOutConnectionProperties properties, Integer index) {
+        if(MqttConnectionProperties.VERSION_3.equals(properties.version()))
+            return new OutboundV3Adapter(name, properties, index);
+        return new OutboundV5Adapter(name, properties, index);
     }
 
     public String getName() {
@@ -46,13 +60,15 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
     }
 
     public boolean start() {
-        if (!inboundAdapter.start())
-            return false;
         for (OutboundAdapter outboundAdapter : outboundAdapters) {
             if (!outboundAdapter.start()) {
                 stop();
                 return false;
             }
+        }
+        if (!inboundAdapter.start()) {
+            stop();
+            return false;
         }
         return true;
     }
@@ -65,7 +81,7 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
     }
 
     @Override
-    public void onMessageArrived(String topic, MqttMessage message) {
+    public void onMessageArrived(String topic, Object message) {
         int index = 0;
         if (routerConfig.getOutConnectionProperties().numberOfConnections() > 1) {
             index = topicMap.computeIfAbsent(topic, key -> {
@@ -77,7 +93,7 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
         try {
             outboundAdapters[index].publish(topicMapper.map(topic), message);
         } catch (Exception e) {
-            logger.debug("Error when publish message [{}]", message);
+            logger.debug("[{}] Route - Error when publish message [{}]", name, message);
             logger.debug("Exception: ", e);
         }
     }

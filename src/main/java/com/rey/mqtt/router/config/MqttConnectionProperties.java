@@ -11,7 +11,14 @@ public interface MqttConnectionProperties extends Config {
     String PERSISTENCE_TYPE_MEMORY = "memory";
     String PERSISTENCE_TYPE_FILE = "file";
 
+    String VERSION_3 = "3";
+    String VERSION_5 = "5";
+
     String prefix();
+
+    @DefaultValue("3")
+    @Key("${prefix}.version")
+    String version();
 
     @Key("${prefix}.host")
     String host();
@@ -28,10 +35,6 @@ public interface MqttConnectionProperties extends Config {
 
     @Key("${prefix}.password")
     String password();
-
-    @DefaultValue("10000")
-    @Key("${prefix}.action_timeout_in_millis")
-    long actionTimeoutInMillis();
 
     @DefaultValue("memory")
     @Key("${prefix}.persistence.type")
@@ -57,10 +60,34 @@ public interface MqttConnectionProperties extends Config {
         return options;
     }
 
+    static org.eclipse.paho.client.mqttv3.MqttConnectOptions getConnectionOptionsV3(MqttConnectionProperties properties) {
+        org.eclipse.paho.client.mqttv3.MqttConnectOptions options = new org.eclipse.paho.client.mqttv3.MqttConnectOptions();
+        if (properties.host() != null) {
+            options.setServerURIs(new String[]{properties.host()});
+        }
+        if(properties.automaticReconnect()) {
+            options.setAutomaticReconnect(true);
+        }
+        if(properties.username() != null) {
+            options.setUserName(properties.username());
+        }
+        if(properties.password() != null) {
+            options.setPassword(properties.password().toCharArray());
+        }
+        return options;
+    }
+
     static MqttClientPersistence getPersistence(MqttConnectionProperties properties) {
         if(PERSISTENCE_TYPE_FILE.equalsIgnoreCase(properties.persistenceType())) {
             return new MqttDefaultFilePersistence(properties.persistenceDirectory());
         }
         return new MemoryPersistence();
+    }
+
+    static org.eclipse.paho.client.mqttv3.MqttClientPersistence getPersistenceV3(MqttConnectionProperties properties) {
+        if(PERSISTENCE_TYPE_FILE.equalsIgnoreCase(properties.persistenceType())) {
+            return new org.eclipse.paho.client.mqttv3.persist.MqttDefaultFilePersistence(properties.persistenceDirectory());
+        }
+        return new org.eclipse.paho.client.mqttv3.persist.MemoryPersistence();
     }
 }

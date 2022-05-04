@@ -28,6 +28,7 @@ repositories {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     implementation 'org.eclipse.paho:org.eclipse.paho.mqttv5.client:1.2.5'
+    implementation 'org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5'
     implementation 'ch.qos.logback:logback-classic:1.2.11'
     implementation 'org.aeonbits.owner:owner:1.0.12'
     implementation 'commons-cli:commons-cli:1.5.0'
