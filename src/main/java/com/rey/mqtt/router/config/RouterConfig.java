@@ -11,15 +11,18 @@ public class RouterConfig {
     private MqttOutConnectionProperties outConnectionProperties;
     private RouterProperties routerProperties;
     private TopicMapperProperties topicMapperProperties;
+    private TopicFilterProperties topicFilterProperties;
 
     private RouterConfig(MqttInConnectionProperties inConnectionProperties,
                          MqttOutConnectionProperties outConnectionProperties,
                          RouterProperties routerProperties,
-                         TopicMapperProperties TopicMapperProperties) {
+                         TopicMapperProperties TopicMapperProperties,
+                         TopicFilterProperties topicFilterProperties) {
         this.inConnectionProperties = inConnectionProperties;
         this.outConnectionProperties = outConnectionProperties;
         this.routerProperties = routerProperties;
         this.topicMapperProperties = TopicMapperProperties;
+        this.topicFilterProperties = topicFilterProperties;
     }
 
     public MqttInConnectionProperties getInConnectionProperties() {
@@ -38,6 +41,10 @@ public class RouterConfig {
         return topicMapperProperties;
     }
 
+    public TopicFilterProperties getTopicFilterProperties() {
+        return topicFilterProperties;
+    }
+
     public static RouterConfig from(Map<?, ?> propertyMap) {
         Map<String, String> prefixMap = new HashMap<>();
         RouterProperties routerProperties = ConfigFactory.create(RouterProperties.class, propertyMap);
@@ -51,11 +58,15 @@ public class RouterConfig {
         prefixMap.put("prefix", "topic-mapper");
         TopicMapperProperties topicMapperProperties = ConfigFactory.create(TopicMapperProperties.class, prefixMap, propertyMap);
 
+        prefixMap.put("prefix", "topic-filter");
+        TopicFilterProperties topicFilterProperties = ConfigFactory.create(TopicFilterProperties.class, prefixMap, propertyMap);
+
         return new RouterConfig(
                 mqttInConnectionProperties,
                 mqttOutConnectionProperties,
                 routerProperties,
-                topicMapperProperties
+                topicMapperProperties,
+                topicFilterProperties
         );
     }
 }

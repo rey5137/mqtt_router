@@ -4,7 +4,9 @@ import com.rey.mqtt.router.config.MqttConnectionProperties;
 import com.rey.mqtt.router.config.MqttInConnectionProperties;
 import com.rey.mqtt.router.config.MqttOutConnectionProperties;
 import com.rey.mqtt.router.config.RouterConfig;
+import com.rey.mqtt.router.config.TopicFilterProperties;
 import com.rey.mqtt.router.config.TopicMapperProperties;
+import com.rey.mqtt.router.filter.TopicFilter;
 import com.rey.mqtt.router.mapper.TopicMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +23,7 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
     private InboundAdapter inboundAdapter;
     private OutboundAdapter[] outboundAdapters;
     private TopicMapper topicMapper;
+    private TopicFilter topicFilter;
     private HashMap<String, Integer> topicMap;
     private int nextIndex = 0;
 
@@ -41,6 +44,7 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
             outboundAdapters[0] = buildOutboundAdapter(name, routerConfig.getOutConnectionProperties(), null);
         }
         topicMapper = TopicMapperProperties.buildTopicMapper(routerConfig.getTopicMapperProperties());
+        topicFilter = TopicFilterProperties.buildTopicFilter(routerConfig.getTopicFilterProperties());
     }
 
     private InboundAdapter buildInboundAdapter(MqttInConnectionProperties properties) {
@@ -82,6 +86,11 @@ public class Router implements InboundAdapter.OnMessageArrivedCallback {
 
     @Override
     public void onMessageArrived(String topic, Object message) {
+        if(!topicFilter.isValid(topic)) {
+            logger.debug("[{}] Route - Discard message [{}] of topic [{}]", name, message, topic);
+            return;
+        }
+
         int index = 0;
         if (routerConfig.getOutConnectionProperties().numberOfConnections() > 1) {
             index = topicMap.computeIfAbsent(topic, key -> {

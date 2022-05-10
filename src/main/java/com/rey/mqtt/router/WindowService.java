@@ -7,10 +7,15 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class WindowService {
+
+    private static final Logger logger = LoggerFactory.getLogger(WindowService.class);
 
     private static volatile RouterService routerService;
 
@@ -59,6 +64,7 @@ public class WindowService {
     }
 
     public static void main(String[] lines) {
+        logger.debug("Command: {}", Stream.of(lines).reduce("", (a, b) -> a + "\n" + b));
         String[] args = lines[0].split("\\s+");
         String command = args[0];
         if ("start".equals(command)) {
