@@ -6,6 +6,7 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
@@ -121,10 +122,13 @@ public class OutboundV3Adapter implements OutboundAdapter {
         }
     }
 
-    private class Callback implements MqttCallback {
+    private class Callback implements MqttCallbackExtended {
 
         @Override
-        public void connectionLost(Throwable cause) {}
+        public void connectionLost(Throwable cause) {
+            logger.debug("[{}] Outbound Adapter - connection lost", name);
+            logger.debug("Exception: ", cause);
+        }
 
         @Override
         public void messageArrived(String topic, MqttMessage message) {}
@@ -134,6 +138,10 @@ public class OutboundV3Adapter implements OutboundAdapter {
             logger.debug("[{}] Outbound Adapter - Message with token [{}] delivered", name, token.hashCode());
         }
 
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+            logger.debug("[{}] Outbound Adapter - connected: {}", name, reconnect);
+        }
     }
 
 }

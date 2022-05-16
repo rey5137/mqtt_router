@@ -5,7 +5,7 @@ import com.rey.mqtt.router.config.MqttInConnectionProperties;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
+import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
@@ -93,11 +93,12 @@ public class InboundV3Adapter implements InboundAdapter {
         }
     }
 
-    private class Callback implements MqttCallback {
+    private class Callback implements MqttCallbackExtended {
 
         @Override
         public void connectionLost(Throwable cause) {
-
+            logger.debug("[{}] Inbound Adapter - connection lost", name);
+            logger.debug("Exception: ", cause);
         }
 
         @Override
@@ -109,6 +110,21 @@ public class InboundV3Adapter implements InboundAdapter {
         @Override
         public void deliveryComplete(IMqttDeliveryToken token) {
 
+        }
+
+        @Override
+        public void connectComplete(boolean reconnect, String serverURI) {
+            logger.debug("[{}] Inbound Adapter - connected: {}", name, reconnect);
+            if(reconnect) {
+                try {
+                    IMqttToken subToken = v3Client.subscribe(mqttConnectionProperties.topic(), mqttConnectionProperties.qos());
+                    subToken.waitForCompletion();
+                    logger.debug("[{}] Inbound Adapter - resubscribe successfully", name);
+                } catch (MqttException e) {
+                    logger.debug("[{}] Inbound Adapter - Error when resubscribe topic", name);
+                    logger.debug("Exception: ", e);
+                }
+            }
         }
     }
 

@@ -98,10 +98,14 @@ public class InboundV5Adapter implements InboundAdapter {
 
         @Override
         public void disconnected(MqttDisconnectResponse disconnectResponse) {
+            logger.debug("[{}] Inbound Adapter - disconnected: {}", name, disconnectResponse);
+            logger.debug("Exception: ", disconnectResponse.getException());
         }
 
         @Override
         public void mqttErrorOccurred(MqttException exception) {
+            logger.debug("[{}] Inbound Adapter - error occurred", name);
+            logger.debug("Exception: ", exception);
         }
 
         @Override
@@ -116,6 +120,17 @@ public class InboundV5Adapter implements InboundAdapter {
 
         @Override
         public void connectComplete(boolean reconnect, String serverURI) {
+            logger.debug("[{}] Inbound Adapter - connected: {}", name, reconnect);
+            if(reconnect) {
+                try{
+                    IMqttToken subToken = v5Client.subscribe(mqttConnectionProperties.topic(), mqttConnectionProperties.qos());
+                    subToken.waitForCompletion();
+                    logger.debug("[{}] Inbound Adapter - resubscribe successfully", name);
+                } catch (MqttException ex) {
+                    logger.debug("[{}] Inbound Adapter - Error when resubscribe topic", name);
+                    logger.debug("Exception: ", ex);
+                }
+            }
         }
 
         @Override

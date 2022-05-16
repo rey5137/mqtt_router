@@ -122,10 +122,14 @@ public class OutboundV5Adapter implements OutboundAdapter {
 
         @Override
         public void disconnected(MqttDisconnectResponse disconnectResponse) {
+            logger.debug("[{}] Outbound Adapter - disconnected: {}", name, disconnectResponse);
+            logger.debug("Exception: ", disconnectResponse.getException());
         }
 
         @Override
         public void mqttErrorOccurred(MqttException exception) {
+            logger.debug("[{}] Outbound Adapter - error occurred", name);
+            logger.debug("Exception: ", exception);
         }
 
         @Override
@@ -140,6 +144,7 @@ public class OutboundV5Adapter implements OutboundAdapter {
 
         @Override
         public void connectComplete(boolean reconnect, String serverURI) {
+            logger.debug("[{}] Outbound Adapter - connected: {}", name, reconnect);
         }
 
         @Override
